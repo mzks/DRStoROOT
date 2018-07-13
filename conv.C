@@ -8,13 +8,13 @@
 */
 
 
-int conv(TString filename = "test10ev.dat"){
+int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
 
     // data file open
     ifstream file;
-    file.open(filename, ios::in | ios::binary);
+    file.open(inFilename, ios::in | ios::binary);
     if(file.is_open()){
-        cout << "file open " << filename << endl;
+        cout << "file open " << inFilename << endl;
     }else{
         cerr << "file open error" << endl;
         return 1;
