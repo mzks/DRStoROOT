@@ -8,7 +8,7 @@
 */
 
 
-int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
+int conv(TString inFilename = "test.dat", TString outFileName = "out.root"){
 
     // data file open
     ifstream file;
@@ -32,28 +32,26 @@ int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
 
 
     // variable for header
-    Char_t fileHeader[4];
-    Char_t timeHeader[4];
-    Char_t boardSerialId[2];
-    Short_t boardSerial;
-    Char_t ch1Header[4];
-    Char_t ch2Header[4];
+    UChar_t fileHeader[4];
+    UChar_t timeHeader[4];
+    UChar_t boardSerialId[2];
+    UShort_t boardSerial;
     Float_t time1BinWidth[1024];
     Float_t time2BinWidth[1024];
     Float_t time3BinWidth[1024];
     Float_t time4BinWidth[1024];
 
     // variable for event
-    Char_t eventHeader[4];
-    Int_t   eventSerial;
-    Short_t Year;
-    Short_t Month;
-    Short_t Day;
-    Short_t Hour;
-    Short_t Minute;
-    Short_t Second;
-    Short_t MillSecond;
-    Short_t Range;
+    UChar_t eventHeader[4];
+    UInt_t   eventSerial;
+    UShort_t Year;
+    UShort_t Month;
+    UShort_t Day;
+    UShort_t Hour;
+    UShort_t Minute;
+    UShort_t Second;
+    UShort_t MillSecond;
+    UShort_t Range;
 
     Char_t boardSerialId2[2];
     Short_t boardSerial2;
@@ -61,16 +59,23 @@ int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
     Short_t triggerSell;
     Char_t  ch1EventHeader[4];
     Int_t   ch1Scaler;
-    Short_t ch1wf[1024];
+    UShort_t ch1wf[1024];
     Char_t  ch2EventHeader[4];
     Int_t   ch2Scaler;
-    Short_t ch2wf[1024];
+    UShort_t ch2wf[1024];
     Char_t  ch3EventHeader[4];
     Int_t   ch3Scaler;
-    Short_t ch3wf[1024];
+    UShort_t ch3wf[1024];
     Char_t  ch4EventHeader[4];
     Int_t   ch4Scaler;
-    Short_t ch4wf[1024];
+    UShort_t ch4wf[1024];
+
+    UShort_t wf[4][1024];
+    for(int ch=0;ch<4;++ch){
+        for(int bin=0;bin<1024;++bin){
+            wf[ch][bin] = 0;
+        }
+    }
 
     auto fout = new TFile("out.root","recreate");
     auto tree = new TTree("tree","DRS4 data");
@@ -78,17 +83,18 @@ int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
     //tree->Branch("time2BinWidth",time2BinWidth,"time2BinWidth[1024]/F");
 
     tree->Branch("eventSerial",&eventSerial,"eventSerial/I");
-    tree->Branch("Year",&Year,"Year/S");
-    tree->Branch("Month",&Month,"Month/S");
-    tree->Branch("Day",&Day,"Day/S");
-    tree->Branch("Hour",&Hour,"Hour/S"); 
-    tree->Branch("Minute",&Minute,"Minute/S");
-    tree->Branch("Second",&Second,"Second/S");
-    tree->Branch("MillSecond",&MillSecond,"MillSecond/S");
-    tree->Branch("Range",&Range,"Range/S");
-    tree->Branch("triggerSell",&triggerSell,"triggerSell/S");
-    tree->Branch("ch1wf",ch1wf,"ch1wf[1024]/S");
-    tree->Branch("ch2wf",ch2wf,"ch2wf[1024]/S");
+    tree->Branch("Year",&Year,"Year/s");
+    tree->Branch("Month",&Month,"Month/s");
+    tree->Branch("Day",&Day,"Day/s");
+    tree->Branch("Hour",&Hour,"Hour/s"); 
+    tree->Branch("Minute",&Minute,"Minute/s");
+    tree->Branch("Second",&Second,"Second/s");
+    tree->Branch("MillSecond",&MillSecond,"MillSecond/s");
+    tree->Branch("Range",&Range,"Range/s");
+    tree->Branch("triggerSell",&triggerSell,"triggerSell/s");
+    tree->Branch("ch1wf",ch1wf,"ch1wf[1024]/s");
+    tree->Branch("ch2wf",ch2wf,"ch2wf[1024]/s");
+    tree->Branch("wf",wf,"wf[4][1024]/s");
     tree->Branch("ch1Scaler",&ch1Scaler,"ch1Scaler/I");
     tree->Branch("ch2Scaler",&ch2Scaler,"ch2Scaler/I");
 
@@ -137,6 +143,7 @@ int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
 
         if(header[0]=='E' && header[1]=='H' && header[2]=='D' && header[3]=='R'){
             
+            //cout << "event header " << endl;
             ++ievents;
 
             file.read((char*) &eventSerial, 4);
@@ -157,19 +164,44 @@ int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
             if(!file.read((char*) &header, 4)) break;
             while(true){
                 if(header[0]=='C' && header[1]=='0' && header[2]=='0' && header[3]=='1'){
+                    //cout << "ch1" << endl;
                     file.read((char*) &ch1Scaler, 4);
                     file.read((char*) &ch1wf, 2048);
+                    for(int i=0;i<1024;++i){
+                        //if(ch1wf[i] < 20000) cout << i << "  " <<  ch1wf[i] << endl;
+                        //cout << i << "  " <<  ch1wf[i] << endl;
+                    }
+                    for(int bin=0;bin<1024;++bin){
+                        wf[0][bin] = ch1wf[bin];
+                    }
                 } else if(header[0]=='C' && header[1]=='0' && header[2]=='0' && header[3]=='2'){
+                    //cout << "ch2" << endl;
                     file.read((char*) &ch2Scaler, 4);
                     file.read((char*) &ch2wf, 2048);
+                    for(int bin=0;bin<1024;++bin){
+                        wf[1][bin] = ch2wf[bin];
+                    }
                 } else if(header[0]=='C' && header[1]=='0' && header[2]=='0' && header[3]=='3'){
+                    //cout << "ch3" << endl;
                     file.read((char*) &ch3Scaler, 4);
                     file.read((char*) &ch3wf, 2048);
+                    for(int bin=0;bin<1024;++bin){
+                        wf[2][bin] = ch3wf[bin];
+                    }
                 } else if(header[0]=='C' && header[1]=='0' && header[2]=='0' && header[3]=='4'){
+                    //cout << "ch4" << endl;
                     file.read((char*) &ch4Scaler, 4);
                     file.read((char*) &ch4wf, 2048);
+                    for(int bin=0;bin<1024;++bin){
+                        wf[3][bin] = ch4wf[bin];
+                    }
                 } else {
                     tree->Fill();
+                    for(int ch=0;ch<4;++ch){
+                        for(int bin=0;bin<1024;++bin){
+                            wf[ch][bin] = 0;
+                        }
+                    }
                     break;
                 }
                 if(!file.read((char*) &header, 4)){
@@ -182,6 +214,7 @@ int conv(TString inFilename = "test10ev.dat", TString outFileName = "out.root"){
     fileover:
     tree->Write();
     fout->Close();
+    cout << ievents << " Events written." << endl;
 
     return 0;
 }
