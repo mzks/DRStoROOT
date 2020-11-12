@@ -1,14 +1,19 @@
 /*
  * conv.C - root macro
+ * Usage: $root -l -b -q conv.C
  * Author K. Mizukoshi
  * DRS4 binary data test
- * IEEE real time school 2018 Cape Town
  * 2018 Jul 13
  * Ref. https://www.psi.ch/drs/DocumentationEN/manual_rev50.pdf
 */
 
 
-int conv(TString inFilename = "test.dat", TString outFileName = "out.root"){
+int conv(TString filename = "testpulse2"){
+
+	// File name setting
+	TString path = "/data/public/kek_drs4_test/";
+	TString inFilename = path + filename + ".dat";
+	TString outFilename = path + filename + ".root";
 
     // data file open
     ifstream file;
@@ -77,7 +82,7 @@ int conv(TString inFilename = "test.dat", TString outFileName = "out.root"){
         }
     }
 
-    auto fout = new TFile("out.root","recreate");
+    auto fout = new TFile(outFilename,"recreate");
     auto tree = new TTree("tree","DRS4 data");
     //tree->Branch("time1BinWidth",time1BinWidth,"time1BinWidth[1024]/F");
     //tree->Branch("time2BinWidth",time2BinWidth,"time2BinWidth[1024]/F");
@@ -105,7 +110,7 @@ int conv(TString inFilename = "test.dat", TString outFileName = "out.root"){
 
     file.read((char*) &header, 4);
     while(true){
-        if(ievents % 100 == 0) cout << ievents << endl;
+        if(ievents % 10000 == 0) cout << ievents << endl;
 
         if(header[0]=='D' && header[1]=='R' && header[2]=='S'){
             cout << "Welcome, the DRS Version is " << header[3] << endl;
@@ -212,6 +217,7 @@ int conv(TString inFilename = "test.dat", TString outFileName = "out.root"){
     }
 
     fileover:
+	tree->Fill();
     tree->Write();
     fout->Close();
     cout << ievents << " Events written." << endl;
